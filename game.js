@@ -387,7 +387,8 @@ joinButton.addEventListener("click", () => {
             return;
         }
 
-        const newHand = createStartingHand();
+       const joinDeck = shuffleDeck(createDeck());
+const newHand = createStartingHand(joinDeck);
         const newOrder = [...order, playerId];
 
         roomRef.update({
