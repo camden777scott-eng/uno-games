@@ -6,8 +6,18 @@
 </head>
 
 <body>
-    <h1>UNO</h1>
-    <p>Multiplayer UNO is coming soon...</p>
+    <div class="menu">
+        <h1>UNO</h1>
+
+        <button id="createGame">Create Game</button>
+
+        <div class="join">
+            <input id="roomCode" type="text" placeholder="Room Code">
+            <button id="joinGame">Join Game</button>
+        </div>
+
+        <p id="status"></p>
+    </div>
 
     <script src="game.js"></script>
 </body>
