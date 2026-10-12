@@ -135,13 +135,6 @@ function makeRoomCode() {
     return code;
 }
 
-function randomCard() {
-    return {
-        color: colors[Math.floor(Math.random() * colors.length)],
-        value: values[Math.floor(Math.random() * values.length)]
-    };
-}
-
 function createStartingHand() {
     const newHand = [];
 
