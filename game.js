@@ -303,14 +303,24 @@ function drawCard() {
 
         if (!myPlayer) return;
 
-        const newHand = [...(myPlayer.hand || []), randomCard()];
+        const deck = [...(room.deck || [])];
+
+if (deck.length === 0) {
+    turnStatus.textContent = "The deck is empty!";
+    return;
+}
+
+const drawnCard = deck.pop();
+
+const newHand = [...(myPlayer.hand || []), drawnCard];
 
         const nextTurn = (room.turnIndex + 1) % order.length;
 
         roomRef.update({
-            ["players/" + playerId + "/hand"]: newHand,
-            turnIndex: nextTurn
-        });
+    ["players/" + playerId + "/hand"]: newHand,
+    deck: deck,
+    turnIndex: nextTurn
+});
     });
 }
 
@@ -339,7 +349,9 @@ while (startingCard.color === "wild") {
 
         turnIndex: 0,
 
-        winner: null
+        winner: null,
+
+deck: deck
     }).then(() => {
         roomInput.value = roomCode;
         showGame(roomCode);
