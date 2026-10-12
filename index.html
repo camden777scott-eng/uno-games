@@ -17,7 +17,20 @@
         </div>
 
         <p id="status"></p>
+    <div id="game" style="display: none;">
+    <h2>UNO Game</h2>
+
+    <p id="turnStatus">Waiting for players...</p>
+
+    <div id="playedCard">
+        <div id="topCard">?</div>
     </div>
+
+    <button id="drawCard">Draw Card</button>
+
+    <h3>Your Hand</h3>
+    <div id="hand"></div>
+</div>
 
     <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-database-compat.js"></script>
