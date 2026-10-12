@@ -316,8 +316,15 @@ function drawCard() {
 
 createButton.addEventListener("click", () => {
     const roomCode = makeRoomCode();
-    const startingHand = createStartingHand();
-    const startingCard = randomCard();
+const deck = shuffleDeck(createDeck());
+const startingHand = createStartingHand(deck);
+
+let startingCard = deck.pop();
+
+while (startingCard.color === "wild") {
+    deck.unshift(startingCard);
+    startingCard = deck.pop();
+}
 
     database.ref("rooms/" + roomCode).set({
         players: {
