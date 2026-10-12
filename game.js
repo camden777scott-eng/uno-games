@@ -412,6 +412,5 @@ joinButton.addEventListener("click", () => {
             status.textContent = "Couldn't join: " + error.message;
         });
 });
-});
 
 document.getElementById("drawCard").addEventListener("click", drawCard);
