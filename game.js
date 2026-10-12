@@ -9,7 +9,105 @@ const topCard = document.getElementById("topCard");
 const turnStatus = document.getElementById("turnStatus");
 
 const colors = ["red", "blue", "green", "yellow"];
-const values = ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9"];
+
+const specialCards = ["skip", "reverse", "draw2"];
+
+function createDeck() {
+    const deck = [];
+
+    colors.forEach((color) => {
+        // One 0
+        deck.push({
+            color: color,
+            value: "0",
+            type: "number"
+        });
+
+        // Two of each 1-9
+        for (let i = 1; i <= 9; i++) {
+            deck.push({
+                color: color,
+                value: String(i),
+                type: "number"
+            });
+
+            deck.push({
+                color: color,
+                value: String(i),
+                type: "number"
+            });
+        }
+
+        // Two Skip
+        deck.push({
+            color: color,
+            value: "Skip",
+            type: "skip"
+        });
+
+        deck.push({
+            color: color,
+            value: "Skip",
+            type: "skip"
+        });
+
+        // Two Reverse
+        deck.push({
+            color: color,
+            value: "Reverse",
+            type: "reverse"
+        });
+
+        deck.push({
+            color: color,
+            value: "Reverse",
+            type: "reverse"
+        });
+
+        // Two +2
+        deck.push({
+            color: color,
+            value: "+2",
+            type: "draw2"
+        });
+
+        deck.push({
+            color: color,
+            value: "+2",
+            type: "draw2"
+        });
+    });
+
+    // 4 Wilds
+    for (let i = 0; i < 4; i++) {
+        deck.push({
+            color: "wild",
+            value: "Wild",
+            type: "wild"
+        });
+    }
+
+    // 4 Wild +4s
+    for (let i = 0; i < 4; i++) {
+        deck.push({
+            color: "wild",
+            value: "+4",
+            type: "wild4"
+        });
+    }
+
+    return deck;
+}
+
+function shuffleDeck(deck) {
+    for (let i = deck.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+
+        [deck[i], deck[j]] = [deck[j], deck[i]];
+    }
+
+    return deck;
+}
 
 let currentRoom = null;
 
