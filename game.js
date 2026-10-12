@@ -11,7 +11,20 @@ const turnStatus = document.getElementById("turnStatus");
 const colors = ["red", "blue", "green", "yellow"];
 const values = ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9"];
 
-let playerHand = [];
+let currentRoom = null;
+
+function getPlayerId() {
+    let id = localStorage.getItem("unoPlayerId");
+
+    if (!id) {
+        id = "player_" + Math.random().toString(36).substring(2, 10);
+        localStorage.setItem("unoPlayerId", id);
+    }
+
+    return id;
+}
+
+const playerId = getPlayerId();
 
 function makeRoomCode() {
     const characters = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
@@ -24,23 +37,86 @@ function makeRoomCode() {
     return code;
 }
 
-function createStartingHand() {
-    playerHand = [];
-
-    for (let i = 0; i < 7; i++) {
-        const color = colors[Math.floor(Math.random() * colors.length)];
-        const value = values[Math.floor(Math.random() * values.length)];
-
-        playerHand.push({
-            color: color,
-            value: value
-        });
-    }
-
-    renderHand();
+function randomCard() {
+    return {
+        color: colors[Math.floor(Math.random() * colors.length)],
+        value: values[Math.floor(Math.random() * values.length)]
+    };
 }
 
-function renderHand() {
+function createStartingHand() {
+    const newHand = [];
+
+    for (let i = 0; i < 7; i++) {
+        newHand.push(randomCard());
+    }
+
+    return newHand;
+}
+
+function showGame(roomCode) {
+    currentRoom = roomCode;
+
+    game.style.display = "block";
+    status.textContent = "Room: " + roomCode;
+
+    database.ref("rooms/" + roomCode).on("value", (snapshot) => {
+        if (!snapshot.exists()) {
+            status.textContent = "Room no longer exists.";
+            return;
+        }
+
+        renderGame(snapshot.val());
+    });
+}
+
+function renderGame(room) {
+    const players = room.players || {};
+    const order = room.order || [];
+    const myPlayer = players[playerId];
+
+    if (!myPlayer) {
+        return;
+    }
+
+    const playerCount = order.length;
+
+    status.textContent =
+        "Room: " + currentRoom + " | Players: " + playerCount + "/4";
+
+    if (room.topCard) {
+        topCard.textContent = room.topCard.value;
+        topCard.className = "";
+        topCard.classList.add(room.topCard.color);
+    }
+
+    renderHand(myPlayer.hand || []);
+
+    if (room.winner) {
+        if (room.winner === playerId) {
+            turnStatus.textContent = "🎉 YOU WIN!";
+        } else {
+            turnStatus.textContent = "Game over!";
+        }
+
+        return;
+    }
+
+    if (playerCount < 2) {
+        turnStatus.textContent = "Waiting for another player...";
+        return;
+    }
+
+    const currentPlayer = order[room.turnIndex || 0];
+
+    if (currentPlayer === playerId) {
+        turnStatus.textContent = "🔥 YOUR TURN!";
+    } else {
+        turnStatus.textContent = "Opponent's turn...";
+    }
+}
+
+function renderHand(playerHand) {
     hand.innerHTML = "";
 
     playerHand.forEach((card, index) => {
@@ -58,42 +134,118 @@ function renderHand() {
 }
 
 function playCard(index) {
-    const card = playerHand[index];
+    if (!currentRoom) return;
 
-    topCard.textContent = card.value;
-    topCard.className = "";
-    topCard.classList.add(card.color);
+    const roomRef = database.ref("rooms/" + currentRoom);
 
-    playerHand.splice(index, 1);
+    roomRef.once("value").then((snapshot) => {
+        const room = snapshot.val();
 
-    renderHand();
+        if (!room) return;
 
-    turnStatus.textContent = "You played a " + card.color + " " + card.value + "!";
-    
-    if (playerHand.length === 0) {
-        turnStatus.textContent = "🎉 YOU WIN!";
-    }
+        const order = room.order || [];
+        const players = room.players || {};
+        const currentPlayer = order[room.turnIndex || 0];
+
+        if (currentPlayer !== playerId) {
+            turnStatus.textContent = "It's not your turn!";
+            return;
+        }
+
+        const myPlayer = players[playerId];
+
+        if (!myPlayer || !myPlayer.hand) return;
+
+        const card = myPlayer.hand[index];
+
+        if (!card) return;
+
+        const top = room.topCard;
+
+        if (card.color !== top.color && card.value !== top.value) {
+            turnStatus.textContent = "You can't play that card!";
+            return;
+        }
+
+        const newHand = [...myPlayer.hand];
+        newHand.splice(index, 1);
+
+        if (newHand.length === 0) {
+            roomRef.update({
+                ["players/" + playerId + "/hand"]: newHand,
+                topCard: card,
+                winner: playerId
+            });
+
+            return;
+        }
+
+        const nextTurn = (room.turnIndex + 1) % order.length;
+
+        roomRef.update({
+            ["players/" + playerId + "/hand"]: newHand,
+            topCard: card,
+            turnIndex: nextTurn
+        });
+    });
 }
 
-function startGame(roomCode) {
-    game.style.display = "block";
-    createStartingHand();
+function drawCard() {
+    if (!currentRoom) return;
 
-    status.textContent = "Room: " + roomCode;
-    turnStatus.textContent = "Your turn!";
+    const roomRef = database.ref("rooms/" + currentRoom);
+
+    roomRef.once("value").then((snapshot) => {
+        const room = snapshot.val();
+
+        if (!room) return;
+
+        const order = room.order || [];
+        const currentPlayer = order[room.turnIndex || 0];
+
+        if (currentPlayer !== playerId) {
+            turnStatus.textContent = "It's not your turn!";
+            return;
+        }
+
+        const myPlayer = room.players[playerId];
+
+        if (!myPlayer) return;
+
+        const newHand = [...(myPlayer.hand || []), randomCard()];
+
+        const nextTurn = (room.turnIndex + 1) % order.length;
+
+        roomRef.update({
+            ["players/" + playerId + "/hand"]: newHand,
+            turnIndex: nextTurn
+        });
+    });
 }
 
 createButton.addEventListener("click", () => {
     const roomCode = makeRoomCode();
+    const startingHand = createStartingHand();
+    const startingCard = randomCard();
 
     database.ref("rooms/" + roomCode).set({
-        players: 1,
-        status: "waiting"
+        players: {
+            [playerId]: {
+                hand: startingHand
+            }
+        },
+
+        order: [playerId],
+
+        topCard: startingCard,
+
+        turnIndex: 0,
+
+        winner: null
+    }).then(() => {
+        roomInput.value = roomCode;
+        showGame(roomCode);
     });
-
-    roomInput.value = roomCode;
-
-    startGame(roomCode);
 });
 
 joinButton.addEventListener("click", () => {
@@ -104,17 +256,40 @@ joinButton.addEventListener("click", () => {
         return;
     }
 
-    database.ref("rooms/" + roomCode).once("value").then((snapshot) => {
-        if (snapshot.exists()) {
-            const room = snapshot.val();
+    const roomRef = database.ref("rooms/" + roomCode);
 
-            database.ref("rooms/" + roomCode + "/players").set(
-                (room.players || 0) + 1
-            );
-
-            startGame(roomCode);
-        } else {
+    roomRef.once("value").then((snapshot) => {
+        if (!snapshot.exists()) {
             status.textContent = "Room not found.";
+            return;
         }
+
+        const room = snapshot.val();
+        const order = room.order || [];
+
+        if (order.length >= 4) {
+            status.textContent = "Room is full.";
+            return;
+        }
+
+        if (order.includes(playerId)) {
+            showGame(roomCode);
+            return;
+        }
+
+        const newHand = createStartingHand();
+        const newOrder = [...order, playerId];
+
+        roomRef.update({
+            ["players/" + playerId]: {
+                hand: newHand
+            },
+
+            order: newOrder
+        }).then(() => {
+            showGame(roomCode);
+        });
     });
 });
+
+document.getElementById("drawCard").addEventListener("click", drawCard);
