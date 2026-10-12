@@ -366,41 +366,52 @@ joinButton.addEventListener("click", () => {
         return;
     }
 
+    status.textContent = "Joining room...";
+
     const roomRef = database.ref("rooms/" + roomCode);
 
-    roomRef.once("value").then((snapshot) => {
-        if (!snapshot.exists()) {
-            status.textContent = "Room not found.";
-            return;
-        }
+    roomRef.once("value")
+        .then((snapshot) => {
+            if (!snapshot.exists()) {
+                status.textContent = "Room not found.";
+                return;
+            }
 
-        const room = snapshot.val();
-        const order = room.order || [];
+            const room = snapshot.val();
+            const order = room.order || [];
 
-        if (order.length >= 4) {
-            status.textContent = "Room is full.";
-            return;
-        }
+            if (order.length >= 4) {
+                status.textContent = "Room is full.";
+                return;
+            }
 
-        if (order.includes(playerId)) {
-            showGame(roomCode);
-            return;
-        }
+            if (order.includes(playerId)) {
+                showGame(roomCode);
+                return;
+            }
 
-       const joinDeck = shuffleDeck(createDeck());
-const newHand = createStartingHand(joinDeck);
-        const newOrder = [...order, playerId];
+            const joinDeck = shuffleDeck(createDeck());
+            const newHand = createStartingHand(joinDeck);
 
-        roomRef.update({
-            ["players/" + playerId]: {
-                hand: newHand
-            },
+            const newOrder = [...order, playerId];
 
-            order: newOrder
-        }).then(() => {
-            showGame(roomCode);
+            return roomRef.update({
+                ["players/" + playerId]: {
+                    hand: newHand
+                },
+                order: newOrder
+            });
+        })
+        .then(() => {
+            if (currentRoom !== roomCode) {
+                showGame(roomCode);
+            }
+        })
+        .catch((error) => {
+            console.error(error);
+            status.textContent = "Couldn't join: " + error.message;
         });
-    });
+});
 });
 
 document.getElementById("drawCard").addEventListener("click", drawCard);
