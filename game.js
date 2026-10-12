@@ -135,14 +135,14 @@ function makeRoomCode() {
     return code;
 }
 
-function createStartingHand() {
-    const newHand = [];
+function createStartingHand(deck) {
+    const hand = [];
 
     for (let i = 0; i < 7; i++) {
-        newHand.push(randomCard());
+        hand.push(deck.pop());
     }
 
-    return newHand;
+    return hand;
 }
 
 function showGame(roomCode) {
