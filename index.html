@@ -19,6 +19,28 @@
         <p id="status"></p>
     </div>
 
-    <script src="game.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-database-compat.js"></script>
+
+<script>
+    const firebaseConfig = {
+        const firebaseConfig = {
+  apiKey: "AIzaSyCXtr8UY9Xr9edzrYbZaUuWfZord5IV1IA",
+  authDomain: "uno-game-9782c.firebaseapp.com",
+  databaseURL: "https://uno-game-9782c-default-rtdb.firebaseio.com",
+  projectId: "uno-game-9782c",
+  storageBucket: "uno-game-9782c.firebasestorage.app",
+  messagingSenderId: "899817493251",
+  appId: "1:899817493251:web:eea89c0566a96876060f36",
+  measurementId: "G-3Y9JS4EJ54"
+};
+
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const database = firebase.database();
+</script>
+
+<script src="game.js"></script>
 </body>
 </html>
