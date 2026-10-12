@@ -17,7 +17,12 @@ function makeRoomCode() {
 createButton.addEventListener("click", () => {
     const roomCode = makeRoomCode();
 
-    status.textContent = "Your room code is: " + roomCode;
+    database.ref("rooms/" + roomCode).set({
+        players: 1,
+        status: "waiting"
+    });
+
+    status.textContent = "Room created! Code: " + roomCode;
     roomInput.value = roomCode;
 });
 
@@ -29,5 +34,17 @@ joinButton.addEventListener("click", () => {
         return;
     }
 
-    status.textContent = "Joining room " + roomCode + "...";
+    database.ref("rooms/" + roomCode).once("value").then((snapshot) => {
+        if (snapshot.exists()) {
+            const room = snapshot.val();
+
+            database.ref("rooms/" + roomCode + "/players").set(
+                (room.players || 0) + 1
+            );
+
+            status.textContent = "Joined room " + roomCode + "!";
+        } else {
+            status.textContent = "Room not found.";
+        }
+    });
 });
